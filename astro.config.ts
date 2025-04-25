@@ -22,6 +22,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   site: 'https://graychii.github.io/',
+  base:"/Personal-Blog/",
   integrations: [
     expressiveCode({
       themes: ['github-light', 'github-dark'],
