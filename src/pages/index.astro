@@ -1,60 +1,60 @@
----
-import BlogCard from '@/components/BlogCard.astro'
-import Link from '@/components/Link.astro'
-import PageHead from '@/components/PageHead.astro'
-import { buttonVariants } from '@/components/ui/button'
-import { SITE } from '@/consts'
-import Layout from '@/layouts/Layout.astro'
-import { getRecentPosts } from '@/lib/data-utils'
+  ---
+  import BlogCard from '@/components/BlogCard.astro'
+  import Link from '@/components/Link.astro'
+  import PageHead from '@/components/PageHead.astro'
+  import { buttonVariants } from '@/components/ui/button'
+  import { SITE } from '@/consts'
+  import Layout from '@/layouts/Layout.astro'
+  import { getRecentPosts } from '@/lib/data-utils'
 
-const blog = await getRecentPosts(SITE.featuredPostCount)
----
+  const blog = await getRecentPosts(SITE.featuredPostCount)
+  ---
 
-<Layout>
-  <PageHead slot="head" title="Home" />
-  <section>
-    <div class="rounded-lg border">
-      <div class="flex flex-col space-y-1.5 p-6">
-        <h3 class="text-3xl leading-none font-medium">Hi, I'm Graychi :)</h3>
-        <p class="text-muted-foreground text-sm">
-          Terrible Ctf Player <span class="font-medium"></span>
-        </p>
+  <Layout>
+    <PageHead slot="head" title="Home" />
+    <section>
+      <div class="rounded-lg border">
+        <div class="flex flex-col space-y-1.5 p-6">
+          <h3 class="text-3xl leading-none font-medium">Hi, I'm Graychi :)</h3>
+          <p class="text-muted-foreground text-sm">
+            Terrible Ctf Player <span class="font-medium"></span>
+          </p>
+        </div>
+        <div class="p-6 pt-0">
+          <p class="text-foreground mb-2 text-sm">
+            Hello, This is my personal Blog where I'll be posting various writeups
+            for different ctf challenges, As well as detailed posts about subjects
+            I find intresting <br /><Link
+              <p
+              class="text-muted-foreground text-sm"
+            >
+              Blog was based on astro-erudite template made by jktrn
+            </Link>
+          </p>
+        </div>
       </div>
-      <div class="p-6 pt-0">
-        <p class="text-foreground mb-2 text-sm">
-          Hello, This is my personal Blog where I'll be posting various writeups
-          for different ctf challenges, As well as detailed posts about subjects
-          I find intresting <br /><Link
-            <p
-            class="text-muted-foreground text-sm"
+      <section class="flex flex-col gap-y-4">
+        <h2 class="text-2xl font-medium">Latest posts</h2>
+        <ul class="flex flex-col gap-y-4">
+          {
+            blog.map((post) => (
+              <li>
+                <BlogCard entry={post} />
+              </li>
+            ))
+          }
+        </ul>
+        <div class="flex justify-center">
+          <Link
+            href="/blog"
+            class={buttonVariants({ variant: 'ghost' }) + ' group'}
           >
-            Blog was based on astro-erudite template made by jktrn
+            See all posts <span
+              class="ml-1.5 transition-transform group-hover:translate-x-1"
+              >&rarr;</span
+            >
           </Link>
-        </p>
-      </div>
-    </div>
-    <section class="flex flex-col gap-y-4">
-      <h2 class="text-2xl font-medium">Latest posts</h2>
-      <ul class="flex flex-col gap-y-4">
-        {
-          blog.map((post) => (
-            <li>
-              <BlogCard entry={post} />
-            </li>
-          ))
-        }
-      </ul>
-      <div class="flex justify-center">
-        <Link
-          href="/blog"
-          class={buttonVariants({ variant: 'ghost' }) + ' group'}
-        >
-          See all posts <span
-            class="ml-1.5 transition-transform group-hover:translate-x-1"
-            >&rarr;</span
-          >
-        </Link>
-      </div>
+        </div>
+      </section>
     </section>
-  </section>
-</Layout>
+  </Layout>
