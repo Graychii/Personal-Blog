@@ -4,6 +4,8 @@ import Link from '@/components/Link.astro'
 import PageHead from '@/components/PageHead.astro'
 import Layout from '@/layouts/Layout.astro'
 
+---
+
 <Layout>
   <PageHead slot="head" title="About" />
   <Breadcrumbs items={[{ label: 'About', icon: 'lucide:info' }]} />
@@ -12,16 +14,17 @@ import Layout from '@/layouts/Layout.astro'
     <div class="min-w-full">
       <div class="prose mb-8">
         <p class="mb-4">
-          Hey, I'm <span class="text-foreground">Graychi</span> Computer Science
-          student and Cybersecurity enthusiast, I enjoy fucking around with computers
-          and ruining things. <br /><br /> Mostly focused on DFIR and RF and a bit
-          of rev, you can find some of my shitty projects on my <Link
+          Hey, I'm <span class="text-foreground">Graychi</span>, a Computer Science student and cybersecurity enthusiast. I enjoy exploring systems and pushing boundaries.<br /><br />
+          Mostly focused on DFIR and RF, with some reversing on the side. You can find some of my projects on my 
+          <Link
             href="https://github.com/Graychii"
             class="text-foreground"
             external
-            underline>Github</Link
-          >, page <br /><br />If you have any question feel free to contact me
-          on discord : Graychii
+            underline
+          >
+            GitHub
+          </Link>.<br /><br />
+          If you have any questions, feel free to contact me on Discord: <span class="font-medium">Graychii</span>.
         </p>
       </div>
     </div>
