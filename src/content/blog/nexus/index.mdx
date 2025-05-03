@@ -1,0 +1,208 @@
+---
+title: 'Forensics writeups'
+description: 'Couple writeups for Nexzero ctf'
+date: 2025-04-03
+tags: ['v1.0.0']
+authors: ['graychi']
+---
+
+# Relizane vs Tizi
+
+```
+in my heart.
+I can't pass a day without writing something about Relizane, in my documents, images... everywhere.
+Some of my friends from Tizi-Ouzou (script-kiddies) are jealous of me and my beloved city.
+They compromised my computer and deleted 03 of my files that contain worthy unique words I wrote about Relizane.
+In the same time, I tried to quickly copy at least the content of file 01 to a safer host but the second I hit CTRL+C CTRL+V boom the copmuter just crashed.
+
+    Can you please use your DFIR skills to at least recover my worthy words!
+```
+**Author** : Houssem0x1
+
+## Overview
+
+In this challenge we were given a windows filesystem taken with Kape, and tasked to recover the deleted files.
+![Deleted files](/static/rel.png)
+
+Starting with the first part `Relizane_part_1.txt` First idea that came to mind was to basically use strings and grep for the flag format : 
+
+![Deleted files](/static/terminal.png)
+
+Which gives us the first part of the flag 
+```
+└─[$] echo 'bmV4dXN7UmVsaXphbmVfMSRfRVAxQw==' | base64 -d
+nexus{Relizane_1$_EP1C
+```
+
+
+The screenshot shows that the JPG image contains embedded thumbnail data, Windows stores such thumbnail cache data in thumbcache_X.db files, which are located in the following location `C:/Users/username/AppData/Local/Microsoft/Windows/Explorer`
+```
+┌─[graychi@Chihiro] - [~/ctf/nexus/forensics/relvsti/C/Users/relizane/AppData/Local/Microsoft/Windows/Explorer] - [10242]
+└─[$] l   
+total 11M
+drwxrwxr-x 2 graychi graychi 4.0K May  3 20:31 .
+drwxrwxr-x 5 graychi graychi 4.0K Apr 11 09:24 ..
+-rw-rw-r-- 1 graychi graychi   24 Oct 17  2024 thumbcache_1280.db
+-rw-rw-r-- 1 graychi graychi 1.0M Oct 17  2024 thumbcache_16.db
+-rw-rw-r-- 1 graychi graychi   24 Oct 17  2024 thumbcache_1920.db
+-rw-rw-r-- 1 graychi graychi 3.0M Oct 19  2024 thumbcache_256.db
+-rw-rw-r-- 1 graychi graychi   24 Oct 17  2024 thumbcache_2560.db
+-rw-rw-r-- 1 graychi graychi 1.0M Oct 17  2024 thumbcache_32.db
+-rw-rw-r-- 1 graychi graychi 1.0M Oct 19  2024 thumbcache_48.db
+-rw-rw-r-- 1 graychi graychi 1.0M Apr 11 07:44 thumbcache_768.db
+-rw-rw-r-- 1 graychi graychi 3.0M Oct 17  2024 thumbcache_96.db
+-rw-rw-r-- 1 graychi graychi   24 Oct 17  2024 thumbcache_custom_stream.db
+-rw-rw-r-- 1 graychi graychi   24 Oct 17  2024 thumbcache_exif.db
+-rw-rw-r-- 1 graychi graychi  29K Oct 19  2024 thumbcache_idx.db
+-rw-rw-r-- 1 graychi graychi   24 Oct 17  2024 thumbcache_sr.db
+-rw-rw-r-- 1 graychi graychi   24 Oct 17  2024 thumbcache_wide.db
+-rw-rw-r-- 1 graychi graychi   24 Oct 17  2024 thumbcache_wide_alternate.db
+```
+
+I started by checking `thumbcache_768.db` as it was the most recent modified file, Using `thumbcacheviewer` ( Here I had to switch to windows ) You can download the tool from [here](https://thumbcacheviewer.github.io/)
+Parsing the db file we get : 
+
+![Deleted files](/static/tb.png)
+
+For the third and final part `Relizane_part_3.docx`, After struggling for a while with this question and trying to cheese it using string, I've finally decided to use the sane way and start doing proper research until I stumbled upon : `https://www.aon.com/cyber-solutions/aon_cyber_labs/windows-search-index-the-forensic-artifact-youve-been-searching-for/` Talking about how `Windows.edb` stores files indexes in the past 24h and most importantly partial files content, which can be located at `C/ProgramData/Microsoft/search/data/applications/windows`
+After trying a bunch of different parsing tools and getting shit outputs, I found [`sidr`](https://github.com/strozfriedberg/sidr) tool
+```
+┌─[graychi@Chihiro] - [~/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr] - [10287]
+└─[$] ./target/release/sidr -f csv ../
+Processing ESE db: ../Windows.edb
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-RELIZAN_File_Report_20250503_195722.298075656_dirty.csv
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-RELIZAN_Internet_History_Report_20250503_195722.298126537_dirty.csv
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-RELIZAN_Activity_History_Report_20250503_195722.298139336_dirty.csv
+
+WARNING: The database state is not clean.
+Processing a dirty database may generate inaccurate and/or incomplete results.
+
+Use esentutl for recovery (/r) and repair (/p).
+Note that esentutl must be run from a version of Windows that is equal to or newer than the one that generated the database.
+Processing ESE db: ../sidr/tests/testdata/Windows.edb
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-80RDGLC_File_Report_20250503_195722.435250914_dirty.csv
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-80RDGLC_Internet_History_Report_20250503_195722.435316606_dirty.csv
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-80RDGLC_Activity_History_Report_20250503_195722.435333058_dirty.csv
+
+WARNING: The database state is not clean.
+Processing a dirty database may generate inaccurate and/or incomplete results.
+
+Use esentutl for recovery (/r) and repair (/p).
+Note that esentutl must be run from a version of Windows that is equal to or newer than the one that generated the database.
+Processing SQLite db: ../sidr/tests/testdata/Windows.db
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-O47KVAD_File_Report_20250503_195722.519416061.csv
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-O47KVAD_Internet_History_Report_20250503_195722.519648197.csv
+/home/graychi/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr/DESKTOP-O47KVAD_Activity_History_Report_20250503_195722.519686640.csv
+
+
+Found 2 Windows Search database(s)
+
+Found 1 Windows Search database(s)
+┌─[graychi@Chihiro] - [~/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr] - [10288]
+└─[$] l
+total 2.1M
+drwxrwxr-x 7 graychi graychi 4.0K May  3 20:57 .
+drwxrwxr-x 4 graychi graychi 4.0K May  3 20:54 ..
+drwxrwxr-x 8 graychi graychi 4.0K May  3 20:54 .git
+-rw-rw-r-- 1 graychi graychi    8 May  3 20:54 .gitignore
+-rw-rw-r-- 1 graychi graychi 5.3K May  3 20:54 .gitlab-ci.yml
+drwxrwxr-x 2 graychi graychi 4.0K May  3 20:54 .world
+-rw-rw-r-- 1 graychi graychi  42K May  3 20:54 Cargo.lock
+-rw-rw-r-- 1 graychi graychi  989 May  3 20:54 Cargo.toml
+-rw-rw-r-- 1 graychi graychi 115K May  3 20:57 DESKTOP-80RDGLC_Activity_History_Report_20250503_195722.435333058_dirty.csv
+-rw-rw-r-- 1 graychi graychi 411K May  3 20:57 DESKTOP-80RDGLC_File_Report_20250503_195722.435250914_dirty.csv
+-rw-rw-r-- 1 graychi graychi 2.7K May  3 20:57 DESKTOP-80RDGLC_Internet_History_Report_20250503_195722.435316606_dirty.csv
+-rw-rw-r-- 1 graychi graychi 118K May  3 20:57 DESKTOP-O47KVAD_Activity_History_Report_20250503_195722.519686640.csv
+-rw-rw-r-- 1 graychi graychi 634K May  3 20:57 DESKTOP-O47KVAD_File_Report_20250503_195722.519416061.csv
+-rw-rw-r-- 1 graychi graychi  12K May  3 20:57 DESKTOP-O47KVAD_Internet_History_Report_20250503_195722.519648197.csv
+-rw-rw-r-- 1 graychi graychi  15K May  3 20:57 DESKTOP-RELIZAN_Activity_History_Report_20250503_195722.298139336_dirty.csv
+-rw-rw-r-- 1 graychi graychi 654K May  3 20:57 DESKTOP-RELIZAN_File_Report_20250503_195722.298075656_dirty.csv
+-rw-rw-r-- 1 graychi graychi    0 May  3 20:57 DESKTOP-RELIZAN_Internet_History_Report_20250503_195722.298126537_dirty.csv
+-rw-rw-r-- 1 graychi graychi  574 May  3 20:54 LICENSE
+-rw-rw-r-- 1 graychi graychi 2.5K May  3 20:54 README.md
+drwxrwxr-x 2 graychi graychi 4.0K May  3 20:54 src
+drwxrwxr-x 3 graychi graychi 4.0K May  3 20:56 target
+drwxrwxr-x 4 graychi graychi 4.0K May  3 20:54 tests
+-rw-rw-r-- 1 graychi graychi 6.1K May  3 20:54 velosidr.yaml
+
+```
+
+Running `cat *.csv | grep docx` to filter out the different results, we get : 
+![Deleted files](/static/damn.png)
+`in the west of algeria. It is the best city ever... 58 32 67 77 62 54 4e 66 49 7a 51 34 4d 44 41 77 49 58 30 Houssem0x1 Windows Search I`
+
+```
+└─[$] echo 5832677762544e66497a51344d444177495830 | xxd -r -p
+X2gwbTNfIzQ4MDAwIX0
+┌─[graychi@Chihiro] - [~/ctf/nexus/forensics/relvsti/C/ProgramData/Microsoft/search/data/applications/windows/sidr] - [10301]
+└─[$] echo 'X2gwbTNfIzQ4MDAwIX0' | base64 -d
+_h0m3_#48000!}%   
+```
+
+Final flag `nexus{Relizane_1$_EP1C_w0nd3rFul_&_h0m3_#48000!}`
+
+# Relizane is Down v2.0
+
+```
+fter a long time doing research one Kernel security and even Browser exploitaion (v8), my friend @shadx0w didn't successed to find any CVEs this year, he was very low on $$ and needed a job like normal people, so I decided to hire him as a junior system/network analyst to secure the infrastructure of Relizane city. On his first day of job, he started to google about some automated network analysis software to automate some of the taks, he found an interesting kernel module and immediately went to execute it on one of the important servers,then boom; immediately the system freezed (rabi yahdik a Djaoued).
+
+I staretd doing some analysis on the incident, can you plase help me answering the questions below!
+
+        What was the Process ID (PID) and the Command Name of the task that was running on the CPU when the panic occurred?
+        What was the IP adress of the machine when the panic occured?
+        Identify the debugfs directory controlling the panic trigger. What is the associated module filename (*.ko)?
+        A flag is hiding within the module's data buffer in memory, can you retrieve it ?
+
+flag format: nexus{PID:coammand_IP_module_filename.ko_flag}
+flag example: nexus{1337:awk_172.137.10.180_root_kit.ko_nexus{somthing_here}}
+```
+
+We were presented with a kernel crash mem dump, to analyze such files we need to use a tool such `crash` with the right symbol tables fortuantely enough after asking nicely the author provided the vmlinux file
+We start analyzing by running `crash vmlinux-5.13.0-30-generic ubuntu20.04-5.13.0-30-generic-20250427.kdump`
+
+### **PID** | **command**: 
+Running `bt` to backtrace the crash reason we straight up get : 
+```
+crash> bt
+PID: 2408     TASK: ffff961c0c8e1840  CPU: 1    COMMAND: "tee"
+```
+
+### **IP**:
+Running `nt` to view the network logs 
+```
+crash> net
+   NET_DEVICE     NAME       IP ADDRESS(ES)
+ffff961c02347000  lo         127.0.0.1, ::1
+ffff961c03e3c000  ens33      192.168.10.144, fe80::bb16:2ef9:9a77:8720
+```
+
+### **rootkit.ko** : 
+Running `log` to check the system logs and going through them 
+```
+crash> log
+```
+We find 
+```
+[   60.591839] rfkill: input handler enabled
+[   64.716879] rfkill: input handler disabled
+[  169.947597] exfil_agent: loading out-of-tree module taints kernel.
+[  169.947641] exfil_agent: module verification failed: signature and/or required key missing - tainting kernel
+[  169.947915] ExfilAgent: Initializing exfiltration agent...
+[  169.947918] ExfilAgent: Stealth protocol engaged.
+[  169.947925] ExfilAgent: Agent active. Control: /sys/kernel/debug/exfil_ctrl/trigger
+[  187.502418] ExfilAgent: Performing emergency cleanup...
+[  187.502422] ExfilAgent: Sensitive data partially wiped.
+[  187.502423] Kernel panic - not syncing: ExfilAgent: Unrecoverable error during exfiltration phase.
+```
+
+### **Flag** : 
+Running search to basically grep the flag 
+```
+crash> search -c "nexus" 
+ffff961c04afb1c8: nexus{Th3_W1p3r_M1ss3d_Th1s_Sp0t!_48000$$$}......6ExfilA
+```
+
+
+
+
+
